@@ -18,12 +18,11 @@ module Level
 
 import           Imajuscule.Prelude
 
-import           Control.Monad.Loops( unfoldM_ )
+import           Control.Monad.Loops( untilJust )
 
 import           Data.Text( Text, pack )
 
-import           System.IO( getChar )
-import           System.Timeout( timeout )
+import           Windows( getCharWithinMicros, flushStdin )
 
 import           Console( Color(..)
                         , ColorIntensity(..)
@@ -151,15 +150,17 @@ getCharWithinDurationMicros durationMicros step =
         else
           return Nothing
     else
-      timeout durationMicros getCharThenFlush
+      getCharWithinMicros durationMicros
+      -- TODO flush stdin
 
 -- used to avoid repeated keys being used later
-flushStdin :: IO ()
-flushStdin = unfoldM_ tryGetChar
+-- TODO maybe this should be called emptyStdIn
+--flushStdin :: IO ()
+--flushStdin = unfoldM_ tryGetChar
 
 getCharThenFlush :: IO Char
 getCharThenFlush =
-  getChar >>=
+  untilJust (getCharWithinMicros maxBound) >>=
     (\c -> flushStdin >> return c)
 
 renderLevelState :: RenderState -> Int -> LevelFinished -> IO ()

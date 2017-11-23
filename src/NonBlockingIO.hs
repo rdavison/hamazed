@@ -7,10 +7,11 @@ module NonBlockingIO
 
 import           Imajuscule.Prelude
 
-import           System.IO( getChar
-                          , hReady
+import qualified Prelude (getChar)
+import           System.IO( hReady
                           , stdin)
 
+import           Windows(flushStdin)
 
 --------------------------------------------------------------------------------
 -- Pure
@@ -27,6 +28,6 @@ callIf call condition =
     False -> (return Nothing)
 
 tryGetChar :: IO (Maybe Char)
-tryGetChar = getChar `callIf` someInputIsAvailable
+tryGetChar = (flushStdin >> Prelude.getChar) `callIf` someInputIsAvailable
   where
     someInputIsAvailable = hReady stdin

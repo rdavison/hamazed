@@ -40,6 +40,7 @@ library
                      , Threading
                      , Timing
                      , Util
+                     , Windows
                      , World
                      , WorldSize
   build-depends:       array

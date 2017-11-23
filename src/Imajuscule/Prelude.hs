@@ -9,6 +9,7 @@ module Imajuscule.Prelude (
                             Eq
                           , Show
                           , Num
+                          , Bounded
                           , Enum
                           , Ord
                           , Bool(..)
@@ -24,6 +25,8 @@ module Imajuscule.Prelude (
                           , notElem
                           , null
                           , minimum
+                          , maxBound
+                          , minBound
                           , either
                           , maybe
                           , zipWith
