@@ -1,9 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Geo ( Col(..)
-           , Coords(..)
-           , Row(..)
+module Geo ( Coords(..)
            , zeroCoords
            , polyExtremities
            ) where

@@ -47,10 +47,6 @@ zeroFrame = Frame 0
 nextIteration :: Iteration -> Iteration
 nextIteration (Iteration(s@(Speed speed), Frame i)) = Iteration (s, Frame (i + speed))
 
-{-# INLINE previousIteration #-}
-previousIteration :: Iteration -> Iteration
-previousIteration (Iteration(s@(Speed speed), Frame i)) = Iteration (s, Frame (i - speed))
-
 data StepType = Update
               | Same
 
@@ -116,8 +112,8 @@ combinePoints :: (Coords -> Location)
               -> Coords
               -> Either Tree Coords
               -> Either Tree Coords
-combinePoints getLocation iteration point =
-  either Left (\prevPoint -> Right point)
+combinePoints _ _ point =
+  either Left (\_ -> Right point)
 
 applyAnimation :: (Coords -> Frame -> [Coords])
                -> Iteration
