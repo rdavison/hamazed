@@ -6,7 +6,6 @@ module Timing
     , computeTime
     , diffTimeSecToMicros
     , nextUpdateCounter
-    , showUpdateTick
     , Timer(..)
     , KeyTime(..)
     -- | reexports
@@ -26,7 +25,6 @@ import           Data.Time( addUTCTime
                           , UTCTime(..) )
 import           Geo( Col(..)
                     , Coords(..) )
-import           WorldSize( WorldSize(..) )
 
 
 -- I introduce this type to prevent equality test which make no sense, like
@@ -72,19 +70,6 @@ gamePeriodMicros = gamePeriodMillis * 1000
 
 tickRepresentationLength :: Col -> Int
 tickRepresentationLength (Col c) = quot c 2
-
-
-showUpdateTick :: Int -> WorldSize -> Text
-showUpdateTick t (WorldSize (Coords _ c@(Col cs))) =
-  let l = tickRepresentationLength c
-      nDotsBefore = max 0 (t + l - cs)
-      nLeftBlanks = t - nDotsBefore
-      nDotsAfter = l - nDotsBefore
-      nRightBlanks = cs - t - l
-  in pack $ replicate nDotsBefore  '.'
-  ++ replicate nLeftBlanks  ' '
-  ++ replicate nDotsAfter   '.'
-  ++ replicate nRightBlanks ' '
 
 
 nextUpdateCounter :: Col -> Int -> Int
