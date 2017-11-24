@@ -7,7 +7,7 @@ module Console ( ConsoleConfig(..)
                , endFrame
                , setForeground
                , setRawForeground
-               , Backend.restoreForeground
+               , restoreForeground
                , renderChar_
                , renderStr
                , renderStr_
@@ -24,7 +24,7 @@ import           Imajuscule.Prelude
 
 import           Data.Maybe( fromMaybe )
 import           Data.String( String )
-import           Data.Text( Text )
+import           Data.Text( Text, unpack )
 
 import qualified System.Console.Terminal.Size as Terminal( size
                                                          , Window(..))
@@ -51,21 +51,6 @@ import           Geo( Col(..)
                     , Direction(..)
                     , Row(..) )
 
-{--
-import qualified RenderBackends.Full as Backend( --}
---{--
-import qualified RenderBackends.Delta as Backend( --}
-                                                  beginFrame
-                                                , endFrame
-                                                , moveTo
-                                                , renderChar
-                                                , renderStr
-                                                , renderTxt
-                                                , setForeground
-                                                , setRawForeground
-                                                , restoreForeground
-                                                , preferredBuffering
-                                                , Color8Code(..) )
 
 --------------------------------------------------------------------------------
 -- Pure
@@ -86,9 +71,6 @@ configureConsoleFor config = do
   hSetEcho stdin $ case config of
       Gaming  -> False
       Editing -> True
-  hSetBuffering stdout $ case config of
-      Gaming  -> Backend.preferredBuffering
-      Editing -> LineBuffering
   case config of
     Gaming  -> do
       hideCursor
@@ -102,21 +84,23 @@ configureConsoleFor config = do
       setCursorPosition x 0
 
 beginFrame :: IO ()
-beginFrame = Backend.beginFrame
+beginFrame = return ()
 
 endFrame :: IO ()
-endFrame = Backend.endFrame
+endFrame = return ()
 
-setForeground :: ColorIntensity -> Color -> IO Backend.Color8Code
-setForeground = Backend.setForeground
+restoreForeground :: Int -> IO ()
+restoreForeground _ = return ()
 
-setRawForeground :: Backend.Color8Code -> IO Backend.Color8Code
-setRawForeground = Backend.setRawForeground
+setForeground :: ColorIntensity -> Color -> IO Int
+setForeground _ _ = return 0
+
+setRawForeground :: Int -> IO Int
+setRawForeground _ = return 0
 
 renderChar_ :: Char -> RenderState -> IO ()
 renderChar_ char (RenderState c) = do
-  Backend.moveTo c
-  Backend.renderChar char
+  putChar char
   return ()
 
 
@@ -125,18 +109,16 @@ renderStr str r@(RenderState c) =
   renderStr_ str r >> return (RenderState $ translateInDir Down c)
 
 renderStr_ :: String -> RenderState -> IO ()
-renderStr_ str (RenderState c) = do
-  Backend.moveTo c
-  Backend.renderStr str
+renderStr_ str (RenderState c) =
+  putStr str
 
 renderTxt :: Text -> RenderState -> IO RenderState
 renderTxt txt r@(RenderState c) =
   renderTxt_ txt r >> return (RenderState $ translateInDir Down c)
 
 renderTxt_ :: Text -> RenderState -> IO ()
-renderTxt_ txt (RenderState c) = do
-  Backend.moveTo c
-  Backend.renderTxt txt
+renderTxt_ txt (RenderState c) =
+  putStr $ unpack txt
 
 renderSegment :: Segment -> Char -> RenderState -> IO ()
 renderSegment l = case l of

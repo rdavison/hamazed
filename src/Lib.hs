@@ -6,28 +6,19 @@ module Lib
 
 import           Imajuscule.Prelude
 
-import           Control.Exception( finally )
+import Geo(Coords(..), zeroCoords)
+import Animation(mkAnimation, renderAnimations, animatedNumber, mkAnimationTree, Speed(..))
+import Render(RenderState(..))
+import Timing(getCurrentTime, KeyTime(..))
+import WorldSize(Location(..))
 
-
-import           Console( configureConsoleFor
-                        , ConsoleConfig(..) )
-import           Game( runGameWorker )
-import           GameParameters( getGameParameters )
-import           Threading( runAndWaitForTermination
-                          , Termination(..) )
-
-
---------------------------------------------------------------------------------
--- IO
---------------------------------------------------------------------------------
-
-run :: IO Termination
-run =
-  (configureConsoleFor Gaming >> runAndWaitForTermination gameWorker)
-  -- When Ctrl+C is hit, an exception is thrown on the main thread, hence
-  -- I use 'finally' to reset the console settings.
-  `finally`
-   configureConsoleFor Editing
-
-gameWorker :: IO ()
-gameWorker = getGameParameters >>= runGameWorker
+run :: IO ()
+run = do
+  t <- getCurrentTime
+  let keytime = KeyTime t
+      anim = mkAnimation (animatedNumber 1 (mkAnimationTree zeroCoords)) keytime (Speed 1)
+      fLoc _ = InsideWorld
+  putStrLn "Before rendering animations"
+  _ <- renderAnimations (Just keytime) fLoc (RenderState zeroCoords) [anim]
+  putStrLn "After rendering animations"
+  return ()

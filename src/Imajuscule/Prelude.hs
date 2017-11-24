@@ -92,6 +92,9 @@ module Imajuscule.Prelude (
                           , curry
                           , uncurry
                           , maxBound
+                          , putStr
+                          , putStrLn
+                          , putChar
                           , Monad(..)
                           -- | Control.Applicative reexports
                           , (<|>)
