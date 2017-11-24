@@ -30,23 +30,13 @@ newtype Iteration = Iteration (Speed, Frame) deriving(Generic, Eq, Show)
 newtype Frame = Frame Int deriving(Generic, Eq, Show, Num)
 newtype Speed = Speed Int deriving(Generic, Eq, Show, Num)
 
-{-# INLINE zeroIteration #-}
-zeroIteration :: Speed -> Iteration
-zeroIteration s = Iteration (s,zeroFrame)
-
-{-# INLINE zeroFrame #-}
-zeroFrame :: Frame
-zeroFrame = Frame 0
-
 data Animation = Animation {
-    _animationIteration :: !Iteration
-  , _animationRender :: !(Animation -> (Coords -> Location) -> IO (Maybe Animation))
+    _animationRender :: !(Animation -> (Coords -> Location) -> IO (Maybe Animation))
 }
 
 mkAnimation :: (Animation -> (Coords -> Location) -> IO (Maybe Animation))
-            -> Speed
             -> Animation
-mkAnimation render speed = Animation {-do not increment, it will be done while rendering-} (zeroIteration speed) render
+mkAnimation render = Animation render
 
 -- \ This datastructure is used to keep a state of the animation progress, not globally,
 --   but locally on each animation point. It is also recursive, so that we can sequence
@@ -67,37 +57,33 @@ mkAnimationTree c = Tree c 0 Nothing
 
 combine :: [Coords]
         -> [Either Tree Coords]
-        -> Iteration
         -> (Coords -> Location)
         -> [Either Tree Coords]
-combine points uncheckedPreviousState iteration getLocation =
+combine points uncheckedPreviousState getLocation =
   let previousState = assert (length points == length uncheckedPreviousState) uncheckedPreviousState
-  in zipWith (combinePoints getLocation iteration) points previousState
+  in zipWith (combinePoints getLocation) points previousState
 
 combinePoints :: (Coords -> Location)
-              -> Iteration
               -> Coords
               -> Either Tree Coords
               -> Either Tree Coords
-combinePoints _ _ point =
+combinePoints _ point =
   either Left (\_ -> Right point)
 
-applyAnimation :: (Coords -> Frame -> [Coords])
-               -> Iteration
+applyAnimation :: (Coords -> [Coords])
                -> (Coords -> Location)
                -> Tree
                -> Tree
-applyAnimation animation iteration@(Iteration (_,globalFrame)) getLocation (Tree root startFrame branches) =
-  let frame = globalFrame - startFrame
-      points = animation root frame
+applyAnimation animation getLocation (Tree root startFrame branches) =
+  let points = animation root
       previousState = fromMaybe (replicate (length points) $ Right $ assert (getLocation root == InsideWorld) root) branches
       -- if previousState contains only Left(s), the animation does not need to be computed.
       -- I wonder if lazyness takes care of that or not?
-      newBranches = combine points previousState iteration getLocation
+      newBranches = combine points previousState getLocation
   in Tree root startFrame $ Just newBranches
 
-animateNumberPure :: Int -> Coords -> Frame -> [Coords]
-animateNumberPure nSides _ _ =
+animateNumberPure :: Int -> Coords -> [Coords]
+animateNumberPure nSides _ =
   let startAngle = if odd nSides then pi else pi/4.0
   in polyExtremities startAngle -- replacing startAngle by pi or (pi/4.0) fixes the problem
 
@@ -107,24 +93,24 @@ animateNumberPure nSides _ _ =
 --------------------------------------------------------------------------------
 
 renderAnimation :: (Coords -> Location) -> Animation -> IO ()
-renderAnimation getLocation a@(Animation _ render) =
+renderAnimation getLocation a@(Animation render) =
     void( render a getLocation )
 
 setRender :: Animation
           -> (Animation -> (Coords -> Location) -> IO (Maybe Animation))
           -> Animation
-setRender (Animation i _) = Animation i
+setRender (Animation _) = Animation
 
 animatedNumber :: Int -> Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animatedNumber n =
   animate' (mkAnimator animateNumberPure animatedNumber n)
 
 data Animator a = Animator {
-    _animatorPure :: !(Iteration -> (Coords -> Location) -> Tree -> Tree)
+    _animatorPure :: !((Coords -> Location) -> Tree -> Tree)
   , _animatorIO   :: !(Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
 }
 
-mkAnimator :: (t -> Coords -> Frame -> [Coords])
+mkAnimator :: (t -> Coords -> [Coords])
            -> (t
                -> Tree
                -> Animation
@@ -139,11 +125,11 @@ mkAnimator pure_ io_ params = Animator (applyAnimation (pure_ params)) (io_ para
 animate' :: Animator a -> Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animate' (Animator pure_ io_) = animate pure_ io_
 
-animate :: (Iteration -> (Coords -> Location) -> Tree -> Tree)
+animate :: ((Coords -> Location) -> Tree -> Tree)
         -- ^ the pure animation function
         -> (Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
         -- ^ the IO animation function
         ->  Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
-animate pureAnim ioAnim state a@(Animation i _) getLocation = do
-  let newState = pureAnim i getLocation state
+animate pureAnim ioAnim state a@(Animation _) getLocation = do
+  let newState = pureAnim getLocation state
   return $ Just (setRender a $ ioAnim newState)
