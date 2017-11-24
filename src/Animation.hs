@@ -172,4 +172,4 @@ animate pureAnim ioAnim state a@(Animation _ i _) getLocation = do
 renderAnimation2 :: [Coords] -> Animation -> IO (Maybe Animation)
 renderAnimation2 points a = do
   putStrLn "."
-  return $ if null points then Nothing else Just a
+  return $ Just a -- when returning Nothing the problem disappears
