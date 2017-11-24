@@ -1,10 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE DeriveGeneric, GeneralizedNewtypeDeriving #-}
 
 module Animation
     ( Animation(..)
-    , Speed(..)
     , mkAnimation
     , mkAnimationTree
     , renderAnimation
@@ -18,17 +16,12 @@ import           Imajuscule.Prelude
 import           Data.List( length )
 import           Data.Maybe( fromMaybe )
 
-import           GHC.Generics( Generic )
 import           Control.Exception( assert )
 
 import           Geo( Coords
                     , polyExtremities )
 import           WorldSize(Location(..))
 
-
-newtype Iteration = Iteration (Speed, Frame) deriving(Generic, Eq, Show)
-newtype Frame = Frame Int deriving(Generic, Eq, Show, Num)
-newtype Speed = Speed Int deriving(Generic, Eq, Show, Num)
 
 data Animation = Animation {
     _animationRender :: !(Animation -> (Coords -> Location) -> IO (Maybe Animation))
@@ -44,8 +37,6 @@ mkAnimation render = Animation render
 data Tree = Tree {
     _treeRoot :: !Coords
     -- ^ where the animation begins
-  , _treeStart :: !Frame
-    -- ^ when the animation begins (relatively to the parent animation if any)
   , _treeBranches :: !(Maybe [Either Tree Coords])
     -- ^ There is one element in the list per animation point.
     -- 'Right Coords' elements are still alive (typically they didn't collide yet with the world).
@@ -53,7 +44,7 @@ data Tree = Tree {
 }
 
 mkAnimationTree :: Coords -> Tree
-mkAnimationTree c = Tree c 0 Nothing
+mkAnimationTree c = Tree c Nothing
 
 combine :: [Coords]
         -> [Either Tree Coords]
@@ -74,13 +65,13 @@ applyAnimation :: (Coords -> [Coords])
                -> (Coords -> Location)
                -> Tree
                -> Tree
-applyAnimation animation getLocation (Tree root startFrame branches) =
+applyAnimation animation getLocation (Tree root branches) =
   let points = animation root
       previousState = fromMaybe (replicate (length points) $ Right $ assert (getLocation root == InsideWorld) root) branches
       -- if previousState contains only Left(s), the animation does not need to be computed.
       -- I wonder if lazyness takes care of that or not?
       newBranches = combine points previousState getLocation
-  in Tree root startFrame $ Just newBranches
+  in Tree root $ Just newBranches
 
 animateNumberPure :: Int -> Coords -> [Coords]
 animateNumberPure nSides _ =
