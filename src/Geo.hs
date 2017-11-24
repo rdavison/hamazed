@@ -206,8 +206,8 @@ mkPointOnCircle radius angle =
   in Vec2 x y
 
 -- if this function doesn't use the Float (startAngle) the problem disappears
-polyExtremities :: Int -> Coords -> Int -> Float -> [Coords]
-polyExtremities nSides center radius startAngle = [Coords (Row (floor startAngle)) (Col 0)]
+polyExtremities :: Float -> [Coords]
+polyExtremities startAngle = [Coords (Row (floor startAngle)) (Col 0)]
 
 discretizeArcOfCircle :: Float -> Float -> Float -> Int -> [Vec2]
 discretizeArcOfCircle radius arcAngle firstAngle resolution =

@@ -164,25 +164,7 @@ animateNumberPure :: Int -> Coords -> Frame -> [Coords]
 animateNumberPure nSides center (Frame i) =
   let startAngle = if odd nSides then pi else pi/4.0
       -- in the next line, replacing startAngle by pi or (pi/4.0) fixes the problem
-      extremities = polyExtremities nSides center i startAngle
-  in connect extremities
-
-connect :: [Coords] -> [Coords]
-connect []  = []
-connect l@[_] = l
-connect (a:rest@(b:_)) = connect2 a b ++ connect rest
-
-connect2 :: Coords -> Coords -> [Coords]
-connect2 start end =
-  let numpoints = 80 -- more than 2 * (max height width of world) to avoid spaces
-  in sampledBresenham numpoints start end
-
-sampledBresenham :: Int -> Coords -> Coords -> [Coords]
-sampledBresenham nSamples start end =
-  let l = bresenhamLength start end
-      seg = mkSegment start end
-      bres = bresenham seg
-  in resample bres (assert (l == length bres) l) nSamples
+  in polyExtremities startAngle
 
 stepAnimation :: Animation -> Animation
 stepAnimation (Animation t i f) = Animation (addAnimationStepDuration t) (nextIteration i) f
