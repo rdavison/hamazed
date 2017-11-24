@@ -7,7 +7,6 @@ module Animation
     , Speed(..)
     , mkAnimation
     , mkAnimationTree
-    , earliestDeadline
     , renderAnimation
     -- | animations
     , animatedNumber
@@ -24,7 +23,6 @@ import           Control.Exception( assert )
 
 import           Geo( Coords
                     , polyExtremities )
-import           Timing( KeyTime )
 import           WorldSize(Location(..))
 
 
@@ -41,16 +39,14 @@ zeroFrame :: Frame
 zeroFrame = Frame 0
 
 data Animation = Animation {
-    _animationNextTime :: !KeyTime
-  , _animationIteration :: !Iteration
+    _animationIteration :: !Iteration
   , _animationRender :: !(Animation -> (Coords -> Location) -> IO (Maybe Animation))
 }
 
 mkAnimation :: (Animation -> (Coords -> Location) -> IO (Maybe Animation))
-            -> KeyTime
             -> Speed
             -> Animation
-mkAnimation render t speed = Animation t {-do not increment, it will be done while rendering-} (zeroIteration speed) render
+mkAnimation render speed = Animation {-do not increment, it will be done while rendering-} (zeroIteration speed) render
 
 -- \ This datastructure is used to keep a state of the animation progress, not globally,
 --   but locally on each animation point. It is also recursive, so that we can sequence
@@ -105,27 +101,19 @@ animateNumberPure nSides _ _ =
   let startAngle = if odd nSides then pi else pi/4.0
   in polyExtremities startAngle -- replacing startAngle by pi or (pi/4.0) fixes the problem
 
-earliestDeadline :: [Animation] -> Maybe KeyTime
-earliestDeadline animations =
-  if null animations
-    then
-      Nothing
-    else
-      Just $ minimum $ map (\(Animation deadline _ _) -> deadline) animations
-
 
 --------------------------------------------------------------------------------
 -- IO
 --------------------------------------------------------------------------------
 
 renderAnimation :: (Coords -> Location) -> Animation -> IO ()
-renderAnimation getLocation a@(Animation _ _ render) =
+renderAnimation getLocation a@(Animation _ render) =
     void( render a getLocation )
 
 setRender :: Animation
           -> (Animation -> (Coords -> Location) -> IO (Maybe Animation))
           -> Animation
-setRender (Animation t i _) = Animation t i
+setRender (Animation i _) = Animation i
 
 animatedNumber :: Int -> Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animatedNumber n =
@@ -156,6 +144,6 @@ animate :: (Iteration -> (Coords -> Location) -> Tree -> Tree)
         -> (Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
         -- ^ the IO animation function
         ->  Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
-animate pureAnim ioAnim state a@(Animation _ i _) getLocation = do
+animate pureAnim ioAnim state a@(Animation i _) getLocation = do
   let newState = pureAnim i getLocation state
   return $ Just (setRender a $ ioAnim newState)
