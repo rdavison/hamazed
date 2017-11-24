@@ -152,10 +152,8 @@ earliestDeadline animations =
 
 renderAnimations :: Maybe KeyTime -> (Coords -> Location) -> [Animation] -> IO ()
 renderAnimations k getLocation anims =
-  mapM_ (\a@(Animation _ _ render) -> do
-    let step = getStep k a
-        a' = applyStep step a
-    render step a' getLocation) anims
+  mapM_ (\a@(Animation _ _ render) ->
+    render Same a getLocation) anims
 
 setRender :: Animation
           -> (StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
