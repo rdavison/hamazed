@@ -10,11 +10,6 @@ module Animation
     , earliestDeadline
     , renderAnimations
     -- | animations
-    , simpleExplosion
-    , gravityExplosion
-    , gravityExplosionThenSimpleExplosion
-    , quantitativeExplosionThenSimpleExplosion
-    , simpleLaser
     , animatedNumber
     ) where
 
@@ -46,8 +41,6 @@ import           Geo( Coords
                     , Vec2(..)
                     , pos2vec
                     , vec2coords )
-import           Render( RenderState
-                       , renderPoints )
 import           Resample( resample )
 import           Timing( KeyTime
                        , addAnimationStepDuration )
@@ -80,10 +73,10 @@ data StepType = Update
 data Animation = Animation {
     _animationNextTime :: !KeyTime
   , _animationIteration :: !Iteration
-  , _animationRender :: !(StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation))
+  , _animationRender :: !(StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
 }
 
-mkAnimation :: (StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation))
+mkAnimation :: (StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
             -> KeyTime
             -> Speed
             -> Animation
@@ -195,30 +188,7 @@ applyAnimation animation iteration@(Iteration (_,globalFrame)) getLocation (Tree
       newBranches = combine points previousState iteration getLocation
   in Tree root startFrame $ Just newBranches
 
-gravityExplosionPure :: Vec2 -> Coords -> Frame -> [Coords]
-gravityExplosionPure initialSpeed origin (Frame iteration) =
-  let o = pos2vec origin
-  in  [vec2coords $ parabola o initialSpeed iteration]
-
-simpleExplosionPure :: Int -> Coords -> Frame -> [Coords]
-simpleExplosionPure resolution center (Frame iteration) =
-  let radius = fromIntegral iteration :: Float
-      c = pos2vec center
-  in map vec2coords $ translatedFullCircleFromQuarterArc c radius 0 resolution
-
-quantitativeExplosionPure :: Int -> Coords -> Frame -> [Coords]
-quantitativeExplosionPure number center (Frame iteration) =
-  let numRand = 10 :: Int
-      rnd = 2 :: Int -- TODO store the random number in the state of the animation
-  -- rnd <- getStdRandom $ randomR (0,numRand-1)
-      radius = fromIntegral iteration :: Float
-      firstAngle = (fromIntegral rnd :: Float) * 2*pi / (fromIntegral numRand :: Float)
-      c = pos2vec center
-  in map vec2coords $ translatedFullCircle c radius firstAngle number
-
 animateNumberPure :: Int -> Coords -> Frame -> [Coords]
-animateNumberPure 1 = simpleExplosionPure 8
-animateNumberPure 2 = rotatingBar Up
 animateNumberPure n = polygon n
 
 -- TODO make it rotate, like the name says :)
@@ -269,63 +239,25 @@ earliestDeadline animations =
 -- IO
 --------------------------------------------------------------------------------
 
-renderAnimations :: Maybe KeyTime -> (Coords -> Location) -> RenderState -> [Animation] -> IO [Animation]
-renderAnimations k getLocation r anims =
+renderAnimations :: Maybe KeyTime -> (Coords -> Location) -> [Animation] -> IO [Animation]
+renderAnimations k getLocation anims =
   catMaybes <$> mapM (\a@(Animation _ _ render) -> do
     let step = getStep k a
         a' = applyStep step a
-    render step a' getLocation r) anims
+    render step a' getLocation) anims
 
 setRender :: Animation
-          -> (StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation))
+          -> (StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
           -> Animation
 setRender (Animation t i _) = Animation t i
 
-simpleLaser :: Segment -> Char -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation)
-simpleLaser seg laserChar _ a@(Animation _ (Iteration (Speed speed, Frame i)) _) _ state = do
-  let points = showSegment seg
-      replacementChar = case laserChar of
-        '|' -> '.'
-        '=' -> '-'
-        _ -> error "unsupported case in simpleLaser"
-      iterationUseReplacement = 2 * speed
-      iterationStop = 4 * speed
-      char = if assert (i > 0) i > iterationUseReplacement then replacementChar else laserChar
-  renderPoints char state points
-  return $ if assert (i > 0) i > iterationStop then Nothing else Just a
-
-quantitativeExplosionThenSimpleExplosion :: Int -> Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation)
-quantitativeExplosionThenSimpleExplosion number = animate fPure f
-  where
-    fPure = chain2AnimationsOnCollision (quantitativeExplosionPure number) (simpleExplosionPure 8)
-    f = quantitativeExplosionThenSimpleExplosion number
-
-simpleExplosion :: Int -> Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation)
-simpleExplosion resolution = animate fPure f
-  where
-    fPure = applyAnimation (simpleExplosionPure resolution)
-    f = simpleExplosion resolution
-
-gravityExplosionThenSimpleExplosion :: Vec2 -> Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation)
-gravityExplosionThenSimpleExplosion initialSpeed = animate fPure f
-  where
-    fPure = chain2AnimationsOnCollision (gravityExplosionPure initialSpeed) (simpleExplosionPure 8)
-    f = gravityExplosionThenSimpleExplosion initialSpeed
-
-
-gravityExplosion :: Vec2 -> Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation)
-gravityExplosion initialSpeed = animate fPure f
-  where
-    fPure = applyAnimation (gravityExplosionPure initialSpeed)
-    f = gravityExplosion initialSpeed
-
-animatedNumber :: Int -> Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation)
+animatedNumber :: Int -> Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animatedNumber n =
   animate' (mkAnimator animateNumberPure animatedNumber n)
 
 data Animator a = Animator {
     _animatorPure :: !(Iteration -> (Coords -> Location) -> Tree -> Tree)
-  , _animatorIO   :: !(Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation))
+  , _animatorIO   :: !(Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
 }
 
 mkAnimator :: (t -> Coords -> Frame -> [Coords])
@@ -334,7 +266,6 @@ mkAnimator :: (t -> Coords -> Frame -> [Coords])
                -> StepType
                -> Animation
                -> (Coords -> Location)
-               -> RenderState
                -> IO (Maybe Animation))
            -> t
            -> Animator a
@@ -342,21 +273,21 @@ mkAnimator pure_ io_ params = Animator (applyAnimation (pure_ params)) (io_ para
 
 -- if this function is not inlined, in optimized mode, the program loops forever when trigerring the animation. TODO test with latest GHC
 --{-# INLINE animate' #-}
-animate' :: Animator a -> Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation)
+animate' :: Animator a -> Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animate' (Animator pure_ io_) = animate pure_ io_
 
 animate :: (Iteration -> (Coords -> Location) -> Tree -> Tree)
         -- ^ the pure animation function
-        -> (Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation))
+        -> (Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
         -- ^ the IO animation function
-        ->  Tree -> StepType -> Animation -> (Coords -> Location) -> RenderState -> IO (Maybe Animation)
+        ->  Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animate pureAnim ioAnim state step a@(Animation _ i _) getLocation = do
   let newState = case step of
         Update -> pureAnim i getLocation state
         Same -> state
   renderAnimation (getAliveCoordinates newState) (setRender a $ ioAnim newState)
 
-renderAnimation :: [Coords] -> Animation -> RenderState -> IO (Maybe Animation)
-renderAnimation points a state = do
-  renderPoints '.' state points
+renderAnimation :: [Coords] -> Animation -> IO (Maybe Animation)
+renderAnimation points a = do
+  putStrLn "."
   return $ if null points then Nothing else Just a

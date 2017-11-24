@@ -23,15 +23,8 @@ library
   other-modules:       Imajuscule.Prelude
                      , Animation
                      , Collision
-                     , Console
-                     , Deadline
-                     , Event
                      , Geo
-                     , Laser
                      , NonBlockingIO
-                     , Number
-                     , Render
-                     , Space
                      , Timing
                      , Util
                      , WorldSize

@@ -8,7 +8,6 @@ import           Imajuscule.Prelude
 
 import Geo(Coords(..), zeroCoords)
 import Animation(mkAnimation, renderAnimations, animatedNumber, mkAnimationTree, Speed(..))
-import Render(RenderState(..))
 import Timing(getCurrentTime, KeyTime(..))
 import WorldSize(Location(..))
 
@@ -19,6 +18,6 @@ run = do
       anim = mkAnimation (animatedNumber 1 (mkAnimationTree zeroCoords)) keytime (Speed 1)
       fLoc _ = InsideWorld
   putStrLn "Before rendering animations"
-  _ <- renderAnimations (Just keytime) fLoc (RenderState zeroCoords) [anim]
+  _ <- renderAnimations (Just keytime) fLoc [anim]
   putStrLn "After rendering animations"
   return ()
