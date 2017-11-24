@@ -28,24 +28,22 @@ mkAnimation = Animation
 --   but locally on each animation point. It is also recursive, so that we can sequence
 --   multiple animations.
 data Tree = Tree {
-    _treeRoot :: !Coords
-    -- ^ where the animation begins
-  , _treeBranches :: !(Maybe[Coords])
+  _treeBranches :: ![Coords]
     -- ^ There is one element in the list per animation point.
 }
 
-mkAnimationTree :: Coords -> Tree
-mkAnimationTree c = Tree c Nothing
+mkAnimationTree :: Tree
+mkAnimationTree = Tree []
 
-applyAnimation :: (Coords -> [Coords])
+applyAnimation :: [Coords]
                -> Tree
                -> Tree
-applyAnimation animation (Tree root _) =
-  let points = animation root
-  in Tree root $ Just points -- when returning the input tree, the problem disappears (animation call is probably not executed)
+applyAnimation animation (Tree _) =
+  let points = animation
+  in Tree points -- when returning the input tree, the problem disappears (animation call is probably not executed)
 
-animateNumberPure :: Int -> Coords -> [Coords]
-animateNumberPure nSides _ =
+animateNumberPure :: Int -> [Coords]
+animateNumberPure nSides =
   let startAngle = if odd nSides then pi else pi/4.0
   in polyExtremities startAngle -- replacing startAngle by pi or (pi/4.0) fixes the problem
 
@@ -72,7 +70,7 @@ data Animator a = Animator {
   , _animatorIO   :: !(Tree -> Animation  -> IO (Maybe Animation))
 }
 
-mkAnimator :: (t -> Coords -> [Coords])
+mkAnimator :: (t -> [Coords])
            -> (t
                -> Tree
                -> Animation
