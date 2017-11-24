@@ -161,10 +161,7 @@ applyAnimation animation iteration@(Iteration (_,globalFrame)) getLocation (Tree
   in Tree root startFrame $ Just newBranches
 
 animateNumberPure :: Int -> Coords -> Frame -> [Coords]
-animateNumberPure = polygon
-
-polygon :: Int -> Coords -> Frame -> [Coords]
-polygon nSides center (Frame i) =
+animateNumberPure nSides center (Frame i) =
   let startAngle = if odd nSides then pi else pi/4.0
       -- in the next line, replacing startAngle by pi or (pi/4.0) fixes the problem
       extremities = polyExtremities nSides center i startAngle
