@@ -30,7 +30,7 @@ mkAnimation = Animation
 data Tree = Tree {
     _treeRoot :: !Coords
     -- ^ where the animation begins
-  , _treeBranches :: !(Maybe [Coords])
+  , _treeBranches :: !(Maybe[Coords])
     -- ^ There is one element in the list per animation point.
 }
 
@@ -42,7 +42,7 @@ applyAnimation :: (Coords -> [Coords])
                -> Tree
 applyAnimation animation (Tree root _) =
   let points = animation root
-  in Tree root $ Just points
+  in Tree root $ Just points -- when returning the input tree, the problem disappears (animation call is probably not executed)
 
 animateNumberPure :: Int -> Coords -> [Coords]
 animateNumberPure nSides _ =
