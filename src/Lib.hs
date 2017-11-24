@@ -6,7 +6,7 @@ module Lib
 
 import           Imajuscule.Prelude
 
-import Geo(Coords(..), zeroCoords)
+import Geo( zeroCoords)
 import Animation(mkAnimation, renderAnimations, animatedNumber, mkAnimationTree, Speed(..))
 import Timing(getCurrentTime, KeyTime(..))
 import WorldSize(Location(..))
