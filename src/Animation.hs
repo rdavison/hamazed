@@ -12,11 +12,6 @@ module Animation
 
 import           Imajuscule.Prelude
 
-import           Data.List( length )
-import           Data.Maybe( fromMaybe )
-
-import           Control.Exception( assert )
-
 import           Geo( Coords
                     , polyExtremities )
 
@@ -42,29 +37,12 @@ data Tree = Tree {
 mkAnimationTree :: Coords -> Tree
 mkAnimationTree c = Tree c Nothing
 
-combine :: [Coords]
-        -> [Coords]
-        -> [Coords]
-combine points uncheckedPreviousState =
-  let previousState = assert (length points == length uncheckedPreviousState) uncheckedPreviousState
-  in zipWith combinePoints points previousState
-
-combinePoints :: Coords
-              -> Coords
-              -> Coords
-combinePoints point _ = point
-
 applyAnimation :: (Coords -> [Coords])
-
                -> Tree
                -> Tree
-applyAnimation animation (Tree root branches) =
+applyAnimation animation (Tree root _) =
   let points = animation root
-      previousState = fromMaybe (replicate (length points) root) branches
-      -- if previousState contains only Left(s), the animation does not need to be computed.
-      -- I wonder if lazyness takes care of that or not?
-      newBranches = combine points previousState
-  in Tree root $ Just newBranches
+  in Tree root $ Just points
 
 animateNumberPure :: Int -> Coords -> [Coords]
 animateNumberPure nSides _ =
