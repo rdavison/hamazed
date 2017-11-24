@@ -8,7 +8,7 @@ module Animation
     , mkAnimation
     , mkAnimationTree
     , earliestDeadline
-    , renderAnimations
+    , renderAnimation
     -- | animations
     , animatedNumber
     ) where
@@ -127,10 +127,9 @@ earliestDeadline animations =
 -- IO
 --------------------------------------------------------------------------------
 
-renderAnimations :: (Coords -> Location) -> [Animation] -> IO ()
-renderAnimations getLocation anims =
-  mapM_ (\a@(Animation _ _ render) ->
-    render a getLocation) anims
+renderAnimation :: (Coords -> Location) -> Animation -> IO ()
+renderAnimation getLocation a@(Animation _ _ render) =
+    void( render a getLocation )
 
 setRender :: Animation
           -> (Animation -> (Coords -> Location) -> IO (Maybe Animation))
@@ -168,9 +167,9 @@ animate :: (Iteration -> (Coords -> Location) -> Tree -> Tree)
         ->  Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animate pureAnim ioAnim state a@(Animation _ i _) getLocation = do
   let newState = pureAnim i getLocation state
-  renderAnimation (getAliveCoordinates newState) (setRender a $ ioAnim newState)
+  renderAnimation2 (getAliveCoordinates newState) (setRender a $ ioAnim newState)
 
-renderAnimation :: [Coords] -> Animation -> IO (Maybe Animation)
-renderAnimation points a = do
+renderAnimation2 :: [Coords] -> Animation -> IO (Maybe Animation)
+renderAnimation2 points a = do
   putStrLn "."
   return $ if null points then Nothing else Just a
