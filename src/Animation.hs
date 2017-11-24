@@ -41,7 +41,6 @@ import           Geo( Coords
                     , Vec2(..)
                     , pos2vec
                     , vec2coords )
-import           Resample( resample )
 import           Timing( KeyTime
                        , addAnimationStepDuration )
 import           WorldSize(Location(..))
