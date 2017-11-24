@@ -146,34 +146,6 @@ combinePoints getLocation iteration point =
                                         in Left $ Tree preCollisionCoords frame Nothing)
                                    collision)
 
--- TODO generic chaining of animations
-{--
-chainAnimationsOnCollision :: [Coords -> Iteration -> [Coords]]
-                           -- ^ each animation function should return a constant number of Coords across iterations
-                           -> Iteration
-                           -> (Coords -> Location)
-                           -- ^ collision function
-                           -> Tree
-                           -> Tree
-chainAnimationsOnCollision animations iteration getLocation tree = undefined
---}
-
-chain2AnimationsOnCollision :: (Coords -> Frame -> [Coords])
-                            -- ^ animation 1
-                            -> (Coords -> Frame -> [Coords])
-                            -- ^ animation 2
-                            -> Iteration
-                            -> (Coords -> Location)
-                            -- ^ collision function
-                            -> Tree
-                            -> Tree
-chain2AnimationsOnCollision anim1 anim2 iteration getLocation tree  =
-  let (Tree a b branches) = applyAnimation anim1 iteration getLocation tree
-      newBranches = Just $ case branches of
-        Nothing -> error "applyAnimation was supposed to create a Just ?"
-        Just l ->  map (either (Left . applyAnimation anim2 iteration getLocation) Right) l
-  in Tree a b newBranches
-
 applyAnimation :: (Coords -> Frame -> [Coords])
                -> Iteration
                -> (Coords -> Location)
@@ -189,16 +161,7 @@ applyAnimation animation iteration@(Iteration (_,globalFrame)) getLocation (Tree
   in Tree root startFrame $ Just newBranches
 
 animateNumberPure :: Int -> Coords -> Frame -> [Coords]
-animateNumberPure n = polygon n
-
--- TODO make it rotate, like the name says :)
-rotatingBar :: Direction -> Coords -> Frame -> [Coords]
-rotatingBar dir first (Frame i) =
-  let centerBar = move (assert (i > 0) i) dir first
-      orthoDir = rotateCcw 1 dir
-      startBar = move i orthoDir centerBar
-      endBar = move (-i) orthoDir centerBar
-  in  connect2 startBar endBar
+animateNumberPure = polygon
 
 polygon :: Int -> Coords -> Frame -> [Coords]
 polygon nSides center (Frame i) =
