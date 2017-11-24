@@ -17,7 +17,6 @@ module Animation
 import           Imajuscule.Prelude
 
 import           Data.List( length )
-import           Data.Either( partitionEithers )
 import           Data.Maybe( fromMaybe )
 
 import           GHC.Generics( Generic )
@@ -69,14 +68,6 @@ data Tree = Tree {
 
 mkAnimationTree :: Coords -> Tree
 mkAnimationTree c = Tree c 0 Nothing
-
-getAliveCoordinates :: Tree -> [Coords]
-getAliveCoordinates (Tree _ _ Nothing) = []
-getAliveCoordinates (Tree _ _ (Just [])) = []
-getAliveCoordinates (Tree _ _ (Just branches)) =
-  let (children, aliveCoordinates) = partitionEithers branches
-  in concatMap getAliveCoordinates children ++ aliveCoordinates
-
 
 combine :: [Coords]
         -> [Either Tree Coords]
@@ -155,7 +146,7 @@ mkAnimator :: (t -> Coords -> Frame -> [Coords])
            -> Animator a
 mkAnimator pure_ io_ params = Animator (applyAnimation (pure_ params)) (io_ params)
 
--- if this function is not inlined, in optimized mode, the program loops forever when trigerring the animation. TODO test with latest GHC
+-- when inlining this function the problem disappears
 --{-# INLINE animate' #-}
 animate' :: Animator a -> Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animate' (Animator pure_ io_) = animate pure_ io_
@@ -167,9 +158,4 @@ animate :: (Iteration -> (Coords -> Location) -> Tree -> Tree)
         ->  Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animate pureAnim ioAnim state a@(Animation _ i _) getLocation = do
   let newState = pureAnim i getLocation state
-  renderAnimation2 (getAliveCoordinates newState) (setRender a $ ioAnim newState)
-
-renderAnimation2 :: [Coords] -> Animation -> IO (Maybe Animation)
-renderAnimation2 points a = do
-  putStrLn "."
-  return $ Just a -- when returning Nothing the problem disappears
+  return $ Just (setRender a $ ioAnim newState)
