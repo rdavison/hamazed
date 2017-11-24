@@ -24,10 +24,7 @@ import           Data.Maybe( catMaybes
 import           GHC.Generics( Generic )
 import           Control.Exception( assert )
 
-import           Collision( firstCollision )
 import           Geo( Coords
-                    , bresenham
-                    , mkSegment
                     , polyExtremities )
 import           Timing( KeyTime
                        , addAnimationStepDuration )
@@ -120,18 +117,7 @@ combinePoints :: (Coords -> Location)
               -> Either Tree Coords
               -> Either Tree Coords
 combinePoints getLocation iteration point =
-  either Left (\prevPoint -> let trajectory = bresenham (mkSegment (assert (getLocation prevPoint == InsideWorld) prevPoint) point)
-                                 collision =  firstCollision getLocation trajectory
-                             in  maybe
-                                   (Right $ assert (getLocation point == InsideWorld) point)
-                                   (\(_, preCollisionCoords) ->
-                                        -- TODO use currentFrame instead of previous and verify combining animations look good:
-                                        -- using the previous was an historical choice when there was no notion of trajectory
-                                        -- but now, since here we move to the precoliision, it makes sense to not skip a frame
-                                        -- anymore
-                                        let (Iteration(_,frame)) = previousIteration iteration
-                                        in Left $ Tree preCollisionCoords frame Nothing)
-                                   collision)
+  either Left (\prevPoint -> Right point)
 
 applyAnimation :: (Coords -> Frame -> [Coords])
                -> Iteration
