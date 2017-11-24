@@ -18,16 +18,14 @@ import           Imajuscule.Prelude
 
 import           Data.List( length )
 import           Data.Either( partitionEithers )
-import           Data.Maybe( catMaybes
-                           , fromMaybe )
+import           Data.Maybe( fromMaybe )
 
 import           GHC.Generics( Generic )
 import           Control.Exception( assert )
 
 import           Geo( Coords
                     , polyExtremities )
-import           Timing( KeyTime
-                       , addAnimationStepDuration )
+import           Timing( KeyTime )
 import           WorldSize(Location(..))
 
 
@@ -43,35 +41,17 @@ zeroIteration s = Iteration (s,zeroFrame)
 zeroFrame :: Frame
 zeroFrame = Frame 0
 
-{-# INLINE nextIteration #-}
-nextIteration :: Iteration -> Iteration
-nextIteration (Iteration(s@(Speed speed), Frame i)) = Iteration (s, Frame (i + speed))
-
-data StepType = Update
-              | Same
-
 data Animation = Animation {
     _animationNextTime :: !KeyTime
   , _animationIteration :: !Iteration
-  , _animationRender :: !(StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
+  , _animationRender :: !(Animation -> (Coords -> Location) -> IO (Maybe Animation))
 }
 
-mkAnimation :: (StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
+mkAnimation :: (Animation -> (Coords -> Location) -> IO (Maybe Animation))
             -> KeyTime
             -> Speed
             -> Animation
 mkAnimation render t speed = Animation t {-do not increment, it will be done while rendering-} (zeroIteration speed) render
-
-
-getStep :: Maybe KeyTime -> Animation -> StepType
-getStep mayKey (Animation k' (Iteration(_,frame)) _)
-  | frame == zeroFrame = Update -- initialize step
-  | otherwise          = maybe Same (\k -> if k == k' then Update else Same) mayKey
-
-applyStep :: StepType -> Animation -> Animation
-applyStep = \case
-               Update -> stepAnimation
-               Same   -> id
 
 -- \ This datastructure is used to keep a state of the animation progress, not globally,
 --   but locally on each animation point. It is also recursive, so that we can sequence
@@ -134,9 +114,6 @@ animateNumberPure nSides _ _ =
   let startAngle = if odd nSides then pi else pi/4.0
   in polyExtremities startAngle -- replacing startAngle by pi or (pi/4.0) fixes the problem
 
-stepAnimation :: Animation -> Animation
-stepAnimation (Animation t i f) = Animation (addAnimationStepDuration t) (nextIteration i) f
-
 earliestDeadline :: [Animation] -> Maybe KeyTime
 earliestDeadline animations =
   if null animations
@@ -150,29 +127,28 @@ earliestDeadline animations =
 -- IO
 --------------------------------------------------------------------------------
 
-renderAnimations :: Maybe KeyTime -> (Coords -> Location) -> [Animation] -> IO ()
-renderAnimations k getLocation anims =
+renderAnimations :: (Coords -> Location) -> [Animation] -> IO ()
+renderAnimations getLocation anims =
   mapM_ (\a@(Animation _ _ render) ->
-    render Same a getLocation) anims
+    render a getLocation) anims
 
 setRender :: Animation
-          -> (StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
+          -> (Animation -> (Coords -> Location) -> IO (Maybe Animation))
           -> Animation
 setRender (Animation t i _) = Animation t i
 
-animatedNumber :: Int -> Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
+animatedNumber :: Int -> Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animatedNumber n =
   animate' (mkAnimator animateNumberPure animatedNumber n)
 
 data Animator a = Animator {
     _animatorPure :: !(Iteration -> (Coords -> Location) -> Tree -> Tree)
-  , _animatorIO   :: !(Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
+  , _animatorIO   :: !(Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
 }
 
 mkAnimator :: (t -> Coords -> Frame -> [Coords])
            -> (t
                -> Tree
-               -> StepType
                -> Animation
                -> (Coords -> Location)
                -> IO (Maybe Animation))
@@ -182,18 +158,16 @@ mkAnimator pure_ io_ params = Animator (applyAnimation (pure_ params)) (io_ para
 
 -- if this function is not inlined, in optimized mode, the program loops forever when trigerring the animation. TODO test with latest GHC
 --{-# INLINE animate' #-}
-animate' :: Animator a -> Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
+animate' :: Animator a -> Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
 animate' (Animator pure_ io_) = animate pure_ io_
 
 animate :: (Iteration -> (Coords -> Location) -> Tree -> Tree)
         -- ^ the pure animation function
-        -> (Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
+        -> (Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation))
         -- ^ the IO animation function
-        ->  Tree -> StepType -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
-animate pureAnim ioAnim state step a@(Animation _ i _) getLocation = do
-  let newState = case step of
-        Update -> pureAnim i getLocation state
-        Same -> state
+        ->  Tree -> Animation -> (Coords -> Location) -> IO (Maybe Animation)
+animate pureAnim ioAnim state a@(Animation _ i _) getLocation = do
+  let newState = pureAnim i getLocation state
   renderAnimation (getAliveCoordinates newState) (setRender a $ ioAnim newState)
 
 renderAnimation :: [Coords] -> Animation -> IO (Maybe Animation)

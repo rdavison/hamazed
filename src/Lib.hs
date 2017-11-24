@@ -18,6 +18,6 @@ run = do
       anim = mkAnimation (animatedNumber 1 (mkAnimationTree zeroCoords)) keytime (Speed 1)
       fLoc _ = InsideWorld
   putStrLn "Before rendering animations"
-  _ <- renderAnimations (Just keytime) fLoc [anim]
+  _ <- renderAnimations fLoc [anim]
   putStrLn "After rendering animations"
   return ()
