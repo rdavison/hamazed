@@ -35,27 +35,24 @@ mkAnimation = Animation
 data Tree = Tree {
     _treeRoot :: !Coords
     -- ^ where the animation begins
-  , _treeBranches :: !(Maybe [Either Tree Coords])
+  , _treeBranches :: !(Maybe [Coords])
     -- ^ There is one element in the list per animation point.
-    -- 'Right Coords' elements are still alive (typically they didn't collide yet with the world).
-    -- 'Left Tree' elements are dead for this animation and maybe gave birth to another animation.
 }
 
 mkAnimationTree :: Coords -> Tree
 mkAnimationTree c = Tree c Nothing
 
 combine :: [Coords]
-        -> [Either Tree Coords]
-        -> [Either Tree Coords]
+        -> [Coords]
+        -> [Coords]
 combine points uncheckedPreviousState =
   let previousState = assert (length points == length uncheckedPreviousState) uncheckedPreviousState
   in zipWith combinePoints points previousState
 
 combinePoints :: Coords
-              -> Either Tree Coords
-              -> Either Tree Coords
-combinePoints point =
-  either Left (\_ -> Right point)
+              -> Coords
+              -> Coords
+combinePoints point _ = point
 
 applyAnimation :: (Coords -> [Coords])
 
@@ -63,7 +60,7 @@ applyAnimation :: (Coords -> [Coords])
                -> Tree
 applyAnimation animation (Tree root branches) =
   let points = animation root
-      previousState = fromMaybe (replicate (length points) $ Right root) branches
+      previousState = fromMaybe (replicate (length points) root) branches
       -- if previousState contains only Left(s), the animation does not need to be computed.
       -- I wonder if lazyness takes care of that or not?
       newBranches = combine points previousState
@@ -115,7 +112,9 @@ animate :: (Tree -> Tree)
         -- ^ the pure animation function
         -> (Tree -> Animation  -> IO (Maybe Animation))
         -- ^ the IO animation function
-        ->  Tree -> Animation  -> IO (Maybe Animation)
+        -> Tree
+        -> Animation
+        -> IO (Maybe Animation)
 animate pureAnim ioAnim state a@(Animation _) = do
   let newState = pureAnim state
   return $ Just (setRender a $ ioAnim newState)
