@@ -24,7 +24,6 @@ library
                      , Animation
                      , Collision
                      , Geo
-                     , NonBlockingIO
                      , Timing
                      , Util
                      , WorldSize

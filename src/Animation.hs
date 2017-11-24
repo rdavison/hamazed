@@ -163,8 +163,7 @@ applyAnimation animation iteration@(Iteration (_,globalFrame)) getLocation (Tree
 animateNumberPure :: Int -> Coords -> Frame -> [Coords]
 animateNumberPure nSides center (Frame i) =
   let startAngle = if odd nSides then pi else pi/4.0
-      -- in the next line, replacing startAngle by pi or (pi/4.0) fixes the problem
-  in polyExtremities startAngle
+  in polyExtremities startAngle -- replacing startAngle by pi or (pi/4.0) fixes the problem
 
 stepAnimation :: Animation -> Animation
 stepAnimation (Animation t i f) = Animation (addAnimationStepDuration t) (nextIteration i) f
