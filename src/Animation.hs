@@ -150,9 +150,9 @@ earliestDeadline animations =
 -- IO
 --------------------------------------------------------------------------------
 
-renderAnimations :: Maybe KeyTime -> (Coords -> Location) -> [Animation] -> IO [Animation]
+renderAnimations :: Maybe KeyTime -> (Coords -> Location) -> [Animation] -> IO ()
 renderAnimations k getLocation anims =
-  catMaybes <$> mapM (\a@(Animation _ _ render) -> do
+  mapM_ (\a@(Animation _ _ render) -> do
     let step = getStep k a
         a' = applyStep step a
     render step a' getLocation) anims
