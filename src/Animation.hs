@@ -27,20 +27,8 @@ import           Control.Exception( assert )
 import           Collision( firstCollision )
 import           Geo( Coords
                     , bresenham
-                    , bresenhamLength
-                    , Segment
-                    , Direction(..)
                     , mkSegment
-                    , move
-                    , polyExtremities
-                    , rotateCcw
-                    , showSegment
-                    , translatedFullCircle
-                    , translatedFullCircleFromQuarterArc
-                    , parabola
-                    , Vec2(..)
-                    , pos2vec
-                    , vec2coords )
+                    , polyExtremities )
 import           Timing( KeyTime
                        , addAnimationStepDuration )
 import           WorldSize(Location(..))

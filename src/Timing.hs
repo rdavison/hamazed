@@ -5,7 +5,6 @@ module Timing
     , addAnimationStepDuration
     , computeTime
     , diffTimeSecToMicros
-    , nextUpdateCounter
     , Timer(..)
     , KeyTime(..)
     -- | reexports
@@ -17,15 +16,11 @@ module Timing
 
 import           Imajuscule.Prelude
 
-import           Data.Text( Text, pack )
 import           Data.Time( addUTCTime
                           , diffUTCTime
                           , getCurrentTime
                           , NominalDiffTime
                           , UTCTime(..) )
-import           Geo( Col(..)
-                    , Coords(..) )
-
 
 -- I introduce this type to prevent equality test which make no sense, like
 -- between "current system time" and a time that was computed
@@ -66,11 +61,3 @@ gamePeriodMicros = gamePeriodMillis * 1000
   where
     gamePeriodMillis = 160 -- this controls the game loop frequency.
                            -- 20 seems to match screen refresh frequency
-
-
-tickRepresentationLength :: Col -> Int
-tickRepresentationLength (Col c) = quot c 2
-
-
-nextUpdateCounter :: Col -> Int -> Int
-nextUpdateCounter (Col c) i = (i + 1) `mod` c
