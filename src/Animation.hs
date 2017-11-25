@@ -27,9 +27,9 @@ mkAnimationTree :: Tree
 mkAnimationTree = Tree []
 
 applyAnimation :: [Coords]
+               -- ^ When this parameter is not used, the problem disappears.
                -> Tree
-               -- ^ -- When returning this parameter, the problem disappears.
-                    -- When removing this parameter from the signature,
+               -- ^ -- When removing this parameter from the signature,
                     --      eventhough the function ignores it, the problem disappears.
                -> Tree
 applyAnimation animation _ =
