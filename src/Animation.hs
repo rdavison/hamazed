@@ -51,10 +51,11 @@ animatedNumber :: Int -> Tree -> Animation  -> IO (Maybe Animation)
 animatedNumber n =
   animate' (mkAnimator animateNumberPure animatedNumber n)
 
--- using strict fields fixes the problem
+
 data Animator a = Animator {
     _animatorPure :: !(Tree -> Tree)
   , _animatorIO   :: !(Tree -> Animation  -> IO (Maybe Animation))
+    -- ^ removing strictness annotation on _animatorIO fixes the problem
 }
 
 mkAnimator :: (t -> [Coords])
@@ -80,4 +81,5 @@ animate :: (Tree -> Tree)
         -> IO (Maybe Animation)
 animate pureAnim ioAnim state a@(Animation _) = do
   let newState = pureAnim state
+  putStrLn "animation is rendered"
   return $ Just (Animation $ ioAnim newState) -- When returning Nothing here the problem disappears

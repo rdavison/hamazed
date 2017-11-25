@@ -6,6 +6,4 @@ import           Prelude( IO
 import           Lib( run )
 
 main :: IO ()
-main = do
-  _ <- run
-  return ()
+main = run
