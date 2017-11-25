@@ -49,11 +49,6 @@ renderAnimation :: Animation -> IO ()
 renderAnimation a@(Animation render) =
     void( render a )
 
-setRender :: Animation
-          -> (Animation  -> IO (Maybe Animation))
-          -> Animation
-setRender (Animation _) = Animation
-
 animatedNumber :: Int -> Tree -> Animation  -> IO (Maybe Animation)
 animatedNumber n =
   animate' (mkAnimator animateNumberPure animatedNumber n)
@@ -86,4 +81,4 @@ animate :: (Tree -> Tree)
         -> IO (Maybe Animation)
 animate pureAnim ioAnim state a@(Animation _) = do
   let newState = pureAnim state
-  return $ Just (setRender a $ ioAnim newState)
+  return $ Just (Animation $ ioAnim newState)
