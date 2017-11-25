@@ -21,7 +21,6 @@ library
   exposed-modules:     Lib
   other-modules:       Imajuscule.Prelude
                      , Animation
-                     , Geo
                      , Timing
                      , Util
                      , WorldSize

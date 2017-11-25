@@ -12,8 +12,12 @@ module Animation
 
 import           Imajuscule.Prelude
 
-import           Geo( Coords
-                    , polyExtremities )
+newtype Coords = Coords Int
+
+polyExtremities :: Float
+                -- ^ If this parameter is not used ,the problem disappears
+                -> [Coords]
+polyExtremities startAngle = [Coords $ floor startAngle]
 
 
 data Animation = Animation {
