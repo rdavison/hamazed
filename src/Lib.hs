@@ -6,11 +6,11 @@ module Lib
 
 import           Imajuscule.Prelude
 
-import Animation(mkAnimation, renderAnimation, animatedNumber, mkAnimationTree)
+import Animation(Animation(..), renderAnimation, animatedNumber, mkAnimationTree)
 
 run :: IO ()
 run = do
-  let anim = mkAnimation (animatedNumber 1 mkAnimationTree)
+  let anim = Animation (animatedNumber 1 mkAnimationTree)
   putStrLn "Before rendering animations"
   _ <- renderAnimation anim
   putStrLn "After rendering animations"

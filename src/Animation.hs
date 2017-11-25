@@ -2,7 +2,6 @@
 
 module Animation
     ( Animation(..)
-    , mkAnimation
     , mkAnimationTree
     , renderAnimation
     -- | animations
@@ -20,13 +19,7 @@ polyExtremities :: Float
 polyExtremities startAngle = [Coords $ floor startAngle]
 
 
-data Animation = Animation {
-    _animationRender :: !(Animation  -> IO (Maybe Animation))
-}
-
-mkAnimation :: (Animation  -> IO (Maybe Animation))
-            -> Animation
-mkAnimation = Animation
+newtype Animation = Animation (Animation -> IO (Maybe Animation))
 
 -- \ This datastructure is used to keep a state of the animation progress, not globally,
 --   but locally on each animation point. It is also recursive, so that we can sequence
