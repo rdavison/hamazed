@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Animation
     ( Animation(..)
@@ -8,8 +7,7 @@ module Animation
     , animatedNumber
     ) where
 
-
-import           Imajuscule.Prelude
+import Control.Monad(void)
 
 newtype Coords = Coords Int
 
@@ -53,6 +51,7 @@ animatedNumber :: Int -> Tree -> Animation  -> IO (Maybe Animation)
 animatedNumber n =
   animate' (mkAnimator animateNumberPure animatedNumber n)
 
+-- using strict fields fixes the problem
 data Animator a = Animator {
     _animatorPure :: !(Tree -> Tree)
   , _animatorIO   :: !(Tree -> Animation  -> IO (Maybe Animation))

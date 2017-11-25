@@ -19,11 +19,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
-  other-modules:       Imajuscule.Prelude
-                     , Animation
-                     , Timing
-                     , Util
-                     , WorldSize
+  other-modules:       Animation
   build-depends:       base >= 4.8 && < 4.10
                      , ansi-terminal
                      , array
