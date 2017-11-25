@@ -79,7 +79,7 @@ animate :: (Tree -> Tree)
         -> Tree
         -> Animation
         -> IO (Maybe Animation)
-animate pureAnim ioAnim state a@(Animation _) = do
+animate pureAnim ioAnim state (Animation _) = do
   let newState = pureAnim state
   putStrLn "animation is rendered"
   return $ Just (Animation $ ioAnim newState) -- When returning Nothing here the problem disappears
