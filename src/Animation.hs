@@ -37,15 +37,17 @@ mkAnimationTree = Tree []
 
 applyAnimation :: [Coords]
                -> Tree
+               -- ^ -- When returning this parameter, the problem disappears.
+                    -- When removing this parameter from the signature,
+                    --      eventhough the function ignores it, the problem disappears.
                -> Tree
-applyAnimation animation (Tree _) =
-  let points = animation
-  in Tree points -- when returning the input tree, the problem disappears (animation call is probably not executed)
+applyAnimation animation _ =
+  Tree animation
 
 animateNumberPure :: Int -> [Coords]
 animateNumberPure nSides =
-  let startAngle = if odd nSides then pi else pi/4.0
-  in polyExtremities startAngle -- replacing startAngle by pi or (pi/4.0) fixes the problem
+  let startAngle = if odd nSides then pi else pi/4.0 -- replacing nSides here by 1 fixes the problem
+  in polyExtremities startAngle -- replacing startAngle here by pi or (pi/4.0) fixes the problem
 
 
 --------------------------------------------------------------------------------
