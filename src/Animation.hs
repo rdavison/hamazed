@@ -81,4 +81,4 @@ animate :: (Tree -> Tree)
         -> IO (Maybe Animation)
 animate pureAnim ioAnim state a@(Animation _) = do
   let newState = pureAnim state
-  return $ Just (Animation $ ioAnim newState)
+  return $ Just (Animation $ ioAnim newState) -- When returning Nothing here the problem disappears
