@@ -21,13 +21,7 @@ polyExtremities startAngle = [Coords $ floor startAngle]
 
 newtype Animation = Animation (Animation -> IO (Maybe Animation))
 
--- \ This datastructure is used to keep a state of the animation progress, not globally,
---   but locally on each animation point. It is also recursive, so that we can sequence
---   multiple animations.
-data Tree = Tree {
-  _treeBranches :: ![Coords]
-    -- ^ There is one element in the list per animation point.
-}
+newtype Tree = Tree [Coords]
 
 mkAnimationTree :: Tree
 mkAnimationTree = Tree []
