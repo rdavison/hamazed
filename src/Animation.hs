@@ -19,7 +19,7 @@ polyExtremities :: Float
 polyExtremities startAngle = [Coords $ floor startAngle]
 
 
-newtype Animation = Animation (Animation -> IO (Maybe Animation))
+newtype Animation = Animation (Animation -> IO Animation)
 
 newtype Tree = Tree [Coords]
 
@@ -49,36 +49,36 @@ renderAnimation :: Animation -> IO ()
 renderAnimation a@(Animation render) =
     void( render a )
 
-animatedNumber :: Int -> Tree -> Animation  -> IO (Maybe Animation)
+animatedNumber :: Int -> Tree -> Animation  -> IO Animation
 animatedNumber n =
   animate' (mkAnimator animateNumberPure animatedNumber n)
 
 data Animator a = Animator {
     _animatorPure :: !(Tree -> Tree)
-  , _animatorIO   :: !(Tree -> Animation  -> IO (Maybe Animation))
+  , _animatorIO   :: !(Tree -> Animation  -> IO Animation)
 }
 
 mkAnimator :: (t -> [Coords])
            -> (t
                -> Tree
                -> Animation
-               -> IO (Maybe Animation))
+               -> IO Animation)
            -> t
            -> Animator a
 mkAnimator pure_ io_ params = Animator (applyAnimation (pure_ params)) (io_ params)
 
 -- when inlining this function the problem disappears
 --{-# INLINE animate' #-}
-animate' :: Animator a -> Tree -> Animation  -> IO (Maybe Animation)
+animate' :: Animator a -> Tree -> Animation  -> IO Animation
 animate' (Animator pure_ io_) = animate pure_ io_
 
 animate :: (Tree -> Tree)
         -- ^ the pure animation function
-        -> (Tree -> Animation  -> IO (Maybe Animation))
+        -> (Tree -> Animation  -> IO Animation)
         -- ^ the IO animation function
         -> Tree
         -> Animation
-        -> IO (Maybe Animation)
-animate pureAnim ioAnim state a@(Animation _) = do
+        -> IO Animation
+animate pureAnim ioAnim state _ = do
   let newState = pureAnim state
-  return $ Just (Animation $ ioAnim newState) -- When returning Nothing here the problem disappears
+  return $ Animation $ ioAnim newState
