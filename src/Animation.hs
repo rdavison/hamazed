@@ -67,8 +67,7 @@ mkAnimator :: (t -> [Coords])
            -> Animator a
 mkAnimator pure_ io_ params = Animator (applyAnimation (pure_ params)) (io_ params)
 
--- when inlining this function the problem disappears
---{-# INLINE animate' #-}
+-- with INLINE pragma here, the problem disappears
 animate' :: Animator a -> Tree -> IO Animation
 animate' (Animator pure_ io_) = animate pure_ io_
 
