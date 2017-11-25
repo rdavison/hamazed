@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Animation
     ( Animation(..)
@@ -8,8 +7,7 @@ module Animation
     , animatedNumber
     ) where
 
-
-import           Imajuscule.Prelude
+import Control.Monad(void)
 
 newtype Coords = Coords Int
 

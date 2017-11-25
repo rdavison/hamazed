@@ -1,10 +1,7 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Lib
     ( run
     ) where
-
-import           Imajuscule.Prelude
 
 import Animation(Animation(..), renderAnimation, animatedNumber, mkAnimationTree)
 
