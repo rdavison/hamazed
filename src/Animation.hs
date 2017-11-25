@@ -18,8 +18,9 @@ polyExtremities :: Float
                 -> [Coords]
 polyExtremities startAngle = [Coords $ floor startAngle]
 
-
-newtype Animation = Animation (Animation -> IO Animation)
+newtype Animation = Animation (IO Animation)
+-- Note : this is extremely simplified, the previous simplification state was
+-- newtype Animation = Animation (Animation -> IO Animation)
 
 newtype Tree = Tree [Coords]
 
@@ -46,22 +47,21 @@ animateNumberPure nSides =
 --------------------------------------------------------------------------------
 
 renderAnimation :: Animation -> IO ()
-renderAnimation a@(Animation render) =
-    void( render a )
+renderAnimation (Animation render) =
+    void render
 
-animatedNumber :: Int -> Tree -> Animation  -> IO Animation
+animatedNumber :: Int -> Tree -> IO Animation
 animatedNumber n =
   animate' (mkAnimator animateNumberPure animatedNumber n)
 
 data Animator a = Animator {
     _animatorPure :: !(Tree -> Tree)
-  , _animatorIO   :: !(Tree -> Animation  -> IO Animation)
+  , _animatorIO   :: !(Tree -> IO Animation)
 }
 
 mkAnimator :: (t -> [Coords])
            -> (t
                -> Tree
-               -> Animation
                -> IO Animation)
            -> t
            -> Animator a
@@ -69,16 +69,15 @@ mkAnimator pure_ io_ params = Animator (applyAnimation (pure_ params)) (io_ para
 
 -- when inlining this function the problem disappears
 --{-# INLINE animate' #-}
-animate' :: Animator a -> Tree -> Animation  -> IO Animation
+animate' :: Animator a -> Tree -> IO Animation
 animate' (Animator pure_ io_) = animate pure_ io_
 
 animate :: (Tree -> Tree)
         -- ^ the pure animation function
-        -> (Tree -> Animation  -> IO Animation)
+        -> (Tree -> IO Animation)
         -- ^ the IO animation function
         -> Tree
-        -> Animation
         -> IO Animation
-animate pureAnim ioAnim state _ = do
+animate pureAnim ioAnim state = do
   let newState = pureAnim state
-  return $ Animation $ ioAnim newState
+  ioAnim newState
