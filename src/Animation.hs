@@ -3,9 +3,11 @@ module Animation
     ( Animation(..)
     , mkAnimationTree
     , renderAnimation
-    -- | animations
     , animatedNumber
     ) where
+
+-- Replacing the lines above by the line hereunder fixes the problem
+--module Animation where
 
 import Control.Monad(void)
 

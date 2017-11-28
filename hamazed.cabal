@@ -21,24 +21,12 @@ library
   exposed-modules:     Lib
   other-modules:       Animation
   build-depends:       base >= 4.8 && < 4.11
-                     , ansi-terminal
-                     , array
-                     , containers
-                     , matrix
-                     , monad-loops
-                     , monadlist
-                     , random
-                     , terminal-size
-                     , text
-                     , thyme
-                     , time
-                     , vector
   default-language:    Haskell2010
 
 executable hamazed-exe
   hs-source-dirs:      app
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts +RTS -maxN4 -RTS
+  ghc-options:         -threaded -rtsopts
   build-depends:       base
                      , hamazed
   default-language:    Haskell2010

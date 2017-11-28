@@ -1,3 +1,10 @@
+This is a repro case for bug : https://ghc.haskell.org/trac/ghc/ticket/14521
+
+Below is the original README :
+
+
+
+
 # What is it?
 
 A terminal ascii game I write - to practice writing Haskell. While writing it,
